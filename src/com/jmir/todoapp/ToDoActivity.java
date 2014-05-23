@@ -4,6 +4,7 @@ import java.io.Console;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.logging.ConsoleHandler;
 
 import org.apache.commons.io.FileUtils;
@@ -12,8 +13,10 @@ import org.apache.commons.logging.Log;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
+import android.animation.ArgbEvaluator;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.LogPrinter;
 import android.view.LayoutInflater;
@@ -30,6 +33,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 import android.os.Build;
+//import android.util.Log;
 
 public class ToDoActivity extends ActionBarActivity {
 	
@@ -38,6 +42,9 @@ public class ToDoActivity extends ActionBarActivity {
 	ListView lvItems;
 	EditText etNewItem;
 	int editresult = 0;
+	//private static final String TAG = "MyActivity";
+	int listitemcolor = 0x0; // Transparent color = 0
+	
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -58,12 +65,33 @@ public class ToDoActivity extends ActionBarActivity {
 
 	}
 
+	// set colors of list based on number of items in the list.
+	// each increase changes the color darker. 
+	// maxes out at 4 shifts, for some reason color is not continuous. (need rgb adapter object)
+	// can't assigning color to individual listitem, without custom adapter (?)
+	private void setcolors()
+	{
+		int numitems;
+		if ((numitems = todoItems.size()) != 0) // start with yellow
+		{ 
+			int newcolor = (0xffff0000 + (0xff00 >> (numitems - 1)));
+			System.out.println("Add numitems = " + numitems);
+			System.out.println("Add newcolor = " + newcolor); 
+			lvItems.setBackgroundColor(newcolor); 
+		}
+	}
+	
+	//	private void ConsoleMessage(String string) {
+		// TODO Auto-generated method stub
+	//    }
+		
+	
 	private void readItems(){
 		File filesDir = getFilesDir();
 		File todofile = new File(filesDir, "todo_list.txt");
 		try {
 			todoItems = new ArrayList<String>(FileUtils.readLines(todofile));
-		
+			// Iterator<String> j = todoItems.iterator();
 		} catch (IOException e) {
 			if (todoItems.isEmpty()) {
 			  // no need to warn, first-time usage also has no file
@@ -77,9 +105,12 @@ public class ToDoActivity extends ActionBarActivity {
 				e.printStackTrace();
 			}
 		}
+		setcolors();
 		
 	}
 	
+
+
 	private void saveItems(){
 		File filesDir = getFilesDir();
 		File todofile = new File(filesDir, "todo_list.txt");
@@ -109,6 +140,7 @@ public class ToDoActivity extends ActionBarActivity {
 				todoAdapter.notifyDataSetChanged();
 				//todoAdapter.remove(pos); doesn't work, requires string arg not int
 				saveItems();
+				setcolors();
 				return true; // why always return true?
 			}
 		});
@@ -130,7 +162,7 @@ public class ToDoActivity extends ActionBarActivity {
 				
 				if (editresult == RESULT_OK) {
 					// hopefully more interesting todo
-					//todoAdapter.notifyDataSetChanged();
+					//todoAdapter.notifyDataSetChanged(); - see activityResult
 					//saveItems();
 					// why does Click return void but LongClick doesn't?
 				}
@@ -151,7 +183,9 @@ public class ToDoActivity extends ActionBarActivity {
 	public void onAddedItem(View v)
 	{
 		String newitem = etNewItem.getText().toString();
+		// etNewItem.setBackgroundColor(0xffffff00);
 		todoAdapter.add(newitem);
+		setcolors();
 		etNewItem.setText("");  // clear out the text field for next time
 		saveItems();
 	}
